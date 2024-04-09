@@ -1,6 +1,6 @@
 ---
 title: "Data formats"
-author: ""
+author: "Michael Birrer"
 format:
   html:
     embed-resources: true
@@ -18,7 +18,10 @@ editor_options:
 The required packages for this homework exercise have already been added.
 
 1.  Run the code chunk below to load the required packages. Tipp: Click on the green play button in the top right corner of the code chunk.
+
 2.  What's the `tidyverse` Package? Describe in maximum two sentences below.
+
+    *The tidyverse package is a package containing all subpackages(ggplot,dplyr,...) from tidyverse. It helps to manage and organize data more easily.*
 
 ```{r}
 library(tidyverse)
@@ -29,7 +32,7 @@ library(tidyverse)
 1.  Use the `read_csv()` (**Note**: Watch out for the `_` and don't use the `.` as in `read.csv()`) function to import the "msw-generation-and-composition-by-income.csv" data from the `data` directory and assign it to an object with the name `waste_data`.
 
 ```{r}
-
+waste_data <- read_csv(file = "data/msw-generation-and-composition-by-income.csv")
 ```
 
 ## Task 3: Vector coercion
@@ -45,6 +48,14 @@ library(tidyverse)
 5.  Render and fix any errors
 
 ```{r}
+waste_data |> 
+  count(income_cat)
+
+levels_income_cat <- c("low income","lower-middle income","upper-middle income","high income")
+
+waste_data_fct <- waste_data |> 
+  mutate(income_cat = factor(income_cat, levels = levels_income_cat))
+
 
 ```
 
@@ -63,6 +74,11 @@ library(tidyverse)
 4.  Render and fix any errors
 
 ```{r}
+
+waste_data_long <- waste_data_fct |> 
+  pivot_longer(cols = food_organic_waste:yard_garden_green_waste,
+               names_to = "waste_category",
+               values_to = "percent") 
 
 ```
 
@@ -85,6 +101,10 @@ waste_data_long <- read_rds("data/msw-generation-and-composition-by-income-long.
 2.  Assign the created data frame to an object with the name `waste_data_long_mean`.
 
 ```{r}
+waste_data_long_mean <- waste_data_long |> 
+  group_by(income_cat, waste_category) |> 
+  summarise( mean_percent = mean(percent))
+
 
 ```
 
@@ -92,8 +112,10 @@ waste_data_long <- read_rds("data/msw-generation-and-composition-by-income-long.
 
 1.  Starting with the `waste_data_long_mean` object, execute the code and observe the output in the Console. Would you publish this table in this format in a report?
 
-```{r}
+    *I would change it back to the wide format for better visualisation.*
 
+```{r}
+waste_data_long_mean
 ```
 
 ## Task 4: From long to wide
@@ -102,9 +124,14 @@ waste_data_long <- read_rds("data/msw-generation-and-composition-by-income-long.
 
 2.  Execute the code and observe the output in the Console. Would you publish this table in a report in this format?
 
+    *Yes this looks much better.*
+
 3.  Render and fix any errors
 
 ```{r}
+waste_data_wide_mean <- waste_data_long_mean |> 
+  pivot_wider(names_from = waste_category,
+              values_from = mean_percent)
 
 ```
 
@@ -131,8 +158,13 @@ waste_data_long_mean <- read_rds("data/msw-generation-and-composition-by-income-
 **Note:** The size of the plot will be different. That is alright and does not need to match.
 
 ```{r}
-
-
+library(ggthemes)
+ggplot(data = waste_data_long_mean, 
+       mapping = aes(x = mean_percent, 
+                     y = waste_category, 
+                     fill = income_cat))+
+  geom_col(position = position_dodge()) +
+  scale_fill_colorblind()
 ```
 
 ![](figs/fig-01-mean-waste-composition-by-income.png)
